@@ -1,2 +1,2 @@
-# OCLineCustomRule
-Custom Rule For OCLine
+# OCLintCustomRule
+Custom Rule For OCLint
