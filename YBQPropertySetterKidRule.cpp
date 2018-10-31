@@ -10,7 +10,7 @@ class YBQPropertySetterKidRule : public AbstractASTVisitorRule<YBQPropertySetter
 public:
     virtual const string name() const override
     {
-        return "属性对应的setter设置不正确";
+        return "属性对应的修饰词设置不正确";
     }
     
     virtual int priority() const override
@@ -27,21 +27,28 @@ public:
         return LANG_OBJC;
     }
     
-    bool VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *node)
+    bool VisitObjCPropertyDecl(ObjCPropertyDecl *node)
     {
-        ObjCPropertyDecl *decl = node->getPropertyDecl();
-        ObjCPropertyDecl::SetterKind setKid = decl->getSetterKind();
-        string type = decl->getType().getAsString();
-        string name = decl->getNameAsString();
+        ObjCPropertyDecl::PropertyAttributeKind attributeKind = node->getPropertyAttributes();
+        string type = node->getType().getAsString();
+        string name = node->getNameAsString();
+        bool isBlock = node->getType()->isBlockPointerType();
         
-        if (is_begin_with(type.c_str(), "NSString") ||
-            is_begin_with(type.c_str(), "NSArray") ||
-            is_begin_with(type.c_str(), "NSDictionary") ||
-            is_begin_with(type.c_str(), "NSSet") ||
-            is_begin_with(type.c_str(), "NSData") ||
-            is_begin_with(type.c_str(), "NSURLRequest") ) {
-            if (setKid != ObjCPropertyDecl::SetterKind::Copy) {
-                addViolation(decl, this, "Property "+name+" shoule use copy");
+        
+        if (isBlock == true) {
+            if ((attributeKind & ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_strong) == ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_strong) {
+                addViolation(node, this, "Block属性 "+name+" 使用copy修饰比使用strong修饰更能表达内存操作方式");
+            } else if ((attributeKind & ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_copy) != ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_copy) {
+                addViolation(node, this, "Block属性 "+name+" 应当使用copy修饰");
+            }
+        } else if (is_begin_with(type.c_str(), "NSString") ||
+                   is_begin_with(type.c_str(), "NSArray") ||
+                   is_begin_with(type.c_str(), "NSDictionary") ||
+                   is_begin_with(type.c_str(), "NSSet") ||
+                   is_begin_with(type.c_str(), "NSData") ||
+                   is_begin_with(type.c_str(), "NSURLRequest") ) {
+            if ((attributeKind & ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_copy) != ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_copy) {
+                addViolation(node, this, type+"属性 "+name+" 应当使用copy修饰");
             }
         } else if (is_begin_with(type.c_str(), "NSMutableString") ||
                    is_begin_with(type.c_str(), "NSMutableArray") ||
@@ -49,8 +56,8 @@ public:
                    is_begin_with(type.c_str(), "NSMutableSet") ||
                    is_begin_with(type.c_str(), "NSMutableData") ||
                    is_begin_with(type.c_str(), "NSMutableURLRequest") ) {
-            if (setKid != ObjCPropertyDecl::SetterKind::Retain) {
-                addViolation(decl, this, "Property "+name+" shoule use strong");
+            if ((attributeKind & ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_strong) != ObjCPropertyDecl::PropertyAttributeKind::OBJC_PR_strong) {
+                addViolation(node, this, type+"属性 "+name+" 应当使用strong修饰");
             }
         }
         
