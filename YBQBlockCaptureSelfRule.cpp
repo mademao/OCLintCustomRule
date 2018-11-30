@@ -31,7 +31,6 @@ public:
     /* Visit BlockDecl */
     bool VisitBlockDecl(BlockDecl *node)
     {
-        
         //获取是否捕获了self
         bool captureSelf = false;
         string selfType = "";
@@ -76,9 +75,10 @@ public:
         }
         
         //捕获了self，检查Block中是否使用self.
-        if (BlockDeclHasUseString(node, "self") == true) {
-            //如果使用了self，无论是直接使用还是访问属性，无论访问属性是否全部使用self.还是部分使用
-            //此时都引用了self，无需提示
+        if (BlockDeclHasUseString(node, "self") == true ||
+            BlockDeclHasUseString(node, "super") == true) {
+            //如果使用了self，无论是直接使用还是访问属性，无论访问属性是否全部使用self.还是部分使用，此时都引用了self，无需提示
+            //如果使用了super，虽然super是编译器指令，但是也会捕获self
         } else {
             //没有使用self却捕获了self，说明直接访问了实例变量
             addViolation(node, this, "Block中访问实例变量请显式写出'self.'");
