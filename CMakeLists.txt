@@ -12,3 +12,6 @@ BUILD_DYNAMIC_RULES("${BuildYBQShortVariableNameRule}")
 
 SET(BuildYBQBlockCaptureSelfRule YBQBlockCaptureSelf)
 BUILD_DYNAMIC_RULES("${BuildYBQBlockCaptureSelfRule}")
+
+SET(BuildYBQRequestBlockCaptureRequestRule YBQRequestBlockCaptureRequest)
+BUILD_DYNAMIC_RULES("${BuildYBQRequestBlockCaptureRequestRule}")
